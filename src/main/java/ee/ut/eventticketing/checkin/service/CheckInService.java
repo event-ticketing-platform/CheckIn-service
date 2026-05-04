@@ -30,8 +30,19 @@ public class CheckInService {
     }
 
     public CheckInResponse createCheckIn(CreateCheckInRequest request) {
-        if (checkInRepository.findByTicketId(request.ticketId()).isPresent()) {
-            throw new DuplicateCheckInException(request.ticketId());
+        java.util.Optional<CheckIn> existingOpt = checkInRepository.findByTicketId(request.ticketId());
+        if (existingOpt.isPresent()) {
+            CheckIn existing = existingOpt.get();
+            if (existing.getCheckInStatus() == CheckInStatus.VALID || existing.getCheckInStatus() == CheckInStatus.DUPLICATE) {
+                throw new DuplicateCheckInException(request.ticketId());
+            } else {
+                TicketValidationResult validationResult = ticketValidationClient.validate(request.ticketId(), request.eventId(), request.attendeeId());
+                if (!validationResult.isValid()) {
+                    throw new InvalidTicketException(request.ticketId());
+                }
+                existing.revalidate(request.eventId(), request.attendeeId(), OffsetDateTime.now());
+                return CheckInMapper.toResponse(checkInRepository.save(existing));
+            }
         }
 
         TicketValidationResult validationResult = ticketValidationClient.validate(request.ticketId(), request.eventId(), request.attendeeId());

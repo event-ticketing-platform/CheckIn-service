@@ -42,7 +42,8 @@ Legacy aliases are still available under `/api/check-ins` for backward compatibi
 
 ### C. OpenAPI / Swagger
 
-- Swagger UI available at `http://localhost:8085/swagger-ui.html`
+- Swagger UI available at `http://localhost:8086/swagger-ui/index.html` when running via Docker
+- Local Maven run: `http://localhost:8085/swagger-ui.html`
 - Explicit OpenAPI specification file:
   - `src/main/resources/openapi/checkin-service.yaml`
 
@@ -92,6 +93,16 @@ npm run dev
 
 Open `http://localhost:5173`.
 
+The frontend calls the clean assignment routes through Vite proxying:
+
+- `POST /checkins`
+- `GET /checkins/{checkInId}`
+- `GET /checkins/tickets/{ticketId}`
+- `GET /events/{eventId}/checkins`
+- `GET /events/{eventId}/attendance`
+- `PATCH /checkins/{checkInId}/reverse`
+- `GET /checkins/events/{eventId}/summary`
+
 ## Docker
 
 The service is containerized with:
@@ -110,4 +121,5 @@ docker compose up --build
 ## Notes
 
 - Port constraints respected: service uses `8085`.
+- In Docker, the backend is exposed on `8086` and the frontend dev server runs on `5173`.
 - `@MockBean` deprecation warnings are present with current Spring Boot test API but do not affect build/test success.

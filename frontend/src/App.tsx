@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react';
 
-type CheckInStatus = 'VALID' | 'DUPLICATE' | 'REJECTED';
+type CheckInStatus = 'VALID' | 'DUPLICATE' | 'REJECTED' | 'REVERSED';
 
 type CheckInResponse = {
   checkInId: string;
@@ -82,6 +82,8 @@ function statusTone(status: CheckInStatus) {
       return 'warn';
     case 'REJECTED':
       return 'bad';
+    case 'REVERSED':
+      return 'neutral';
     default:
       return 'neutral';
   }
@@ -89,10 +91,10 @@ function statusTone(status: CheckInStatus) {
 
 export default function App() {
   const [form, setForm] = useState<RequestForm>(defaultForm);
-  const [created, setCreated] = useState<CheckInResponse | null>(null);
+  const [currentCheckIn, setCurrentCheckIn] = useState<CheckInResponse | null>(null);
   const [summary, setSummary] = useState<CheckInSummaryResponse | null>(null);
-  const [lookedUp, setLookedUp] = useState<CheckInResponse | null>(null);
-  const [loading, setLoading] = useState<'create' | 'lookup' | 'summary' | null>(null);
+  const [attendance, setAttendance] = useState<number | null>(null);
+  const [loading, setLoading] = useState<'create' | 'lookup' | 'summary' | 'attendance' | 'reverse' | 'refresh' | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
@@ -109,13 +111,13 @@ export default function App() {
     setLoading('create');
     setError(null);
     try {
-      const payload = await requestJson<CheckInResponse>('/api/check-ins', {
+      const payload = await requestJson<CheckInResponse>('/checkins', {
         method: 'POST',
         body: JSON.stringify(form),
       });
-      setCreated(payload);
-      setLookedUp(null);
+      setCurrentCheckIn(payload);
       setSummary(null);
+      setAttendance(null);
     } catch (caughtError) {
       setError(caughtError as ApiError);
     } finally {
@@ -136,13 +138,34 @@ export default function App() {
     setLoading('lookup');
     setError(null);
     try {
-      const payload = await requestJson<CheckInResponse>(`/api/check-ins/tickets/${form.ticketId}`);
-      setLookedUp(payload);
-      setCreated(null);
+      const payload = await requestJson<CheckInResponse>(`/checkins/tickets/${form.ticketId}`);
+      setCurrentCheckIn(payload);
       setSummary(null);
+      setAttendance(null);
     } catch (caughtError) {
       setError(caughtError as ApiError);
-      setLookedUp(null);
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function handleRefreshCurrent() {
+    if (!currentCheckIn) {
+      setError({
+        status: 400,
+        error: 'No active check-in',
+        message: 'Create or look up a check-in first.',
+      });
+      return;
+    }
+
+    setLoading('refresh');
+    setError(null);
+    try {
+      const payload = await requestJson<CheckInResponse>(`/checkins/${currentCheckIn.checkInId}`);
+      setCurrentCheckIn(payload);
+    } catch (caughtError) {
+      setError(caughtError as ApiError);
     } finally {
       setLoading(null);
     }
@@ -161,13 +184,60 @@ export default function App() {
     setLoading('summary');
     setError(null);
     try {
-      const payload = await requestJson<CheckInSummaryResponse>(`/api/check-ins/events/${form.eventId}/summary`);
+      const payload = await requestJson<CheckInSummaryResponse>(`/checkins/events/${form.eventId}/summary`);
       setSummary(payload);
-      setCreated(null);
-      setLookedUp(null);
     } catch (caughtError) {
       setError(caughtError as ApiError);
       setSummary(null);
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function handleAttendance() {
+    if (!isUuid(form.eventId)) {
+      setError({
+        status: 400,
+        error: 'Invalid input',
+        message: 'Event ID must be a valid UUID value.',
+      });
+      return;
+    }
+
+    setLoading('attendance');
+    setError(null);
+    try {
+      const payload = await requestJson<number>(`/events/${form.eventId}/attendance`);
+      setAttendance(payload);
+    } catch (caughtError) {
+      setError(caughtError as ApiError);
+      setAttendance(null);
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function handleReverse() {
+    if (!currentCheckIn) {
+      setError({
+        status: 400,
+        error: 'No active check-in',
+        message: 'Create or look up a check-in first.',
+      });
+      return;
+    }
+
+    setLoading('reverse');
+    setError(null);
+    try {
+      const payload = await requestJson<CheckInResponse>(`/checkins/${currentCheckIn.checkInId}/reverse`, {
+        method: 'PATCH',
+      });
+      setCurrentCheckIn(payload);
+      const refreshedAttendance = await requestJson<number>(`/events/${payload.eventId}/attendance`);
+      setAttendance(refreshedAttendance);
+    } catch (caughtError) {
+      setError(caughtError as ApiError);
     } finally {
       setLoading(null);
     }
@@ -177,10 +247,9 @@ export default function App() {
     <main className="shell">
       <section className="card form-card">
         <h1>Attendee Check-in</h1>
-        <p className="subtitle">Enter ticket, event, and attendee IDs to check in or verify records.</p>
+        <p className="subtitle">Check in attendees, inspect records, see attendance counts, and reverse mistakes from one UI.</p>
 
         <form onSubmit={handleCreate} className="inputs-grid">
-
           <label>
             Ticket ID
             <input
@@ -213,6 +282,15 @@ export default function App() {
             <button type="button" onClick={handleLookupByTicket} disabled={loading === 'lookup'}>
               {loading === 'lookup' ? 'Loading...' : 'Find ticket check-in'}
             </button>
+            <button type="button" onClick={handleRefreshCurrent} disabled={loading === 'refresh' || !currentCheckIn}>
+              {loading === 'refresh' ? 'Refreshing...' : 'Reload active check-in'}
+            </button>
+            <button type="button" onClick={handleAttendance} disabled={loading === 'attendance'}>
+              {loading === 'attendance' ? 'Loading...' : 'Get attendance'}
+            </button>
+            <button type="button" onClick={handleReverse} disabled={loading === 'reverse' || !currentCheckIn}>
+              {loading === 'reverse' ? 'Reversing...' : 'Reverse active check-in'}
+            </button>
             <button type="button" onClick={handleSummary} disabled={loading === 'summary'}>
               {loading === 'summary' ? 'Loading...' : 'Get event summary'}
             </button>
@@ -238,50 +316,52 @@ export default function App() {
 
       <section className="results-grid">
         <article className="card result-card">
-          <h2>Check-in result</h2>
-          {created ? (
+          <h2>Active check-in</h2>
+          {currentCheckIn ? (
             <dl className="record-list">
               <div>
                 <dt>Status</dt>
                 <dd>
-                  <span className={`tone tone--${statusTone(created.checkInStatus)}`}>{created.checkInStatus}</span>
+                  <span className={`tone tone--${statusTone(currentCheckIn.checkInStatus)}`}>{currentCheckIn.checkInStatus}</span>
                 </dd>
               </div>
               <div>
                 <dt>Check-in ID</dt>
-                <dd>{created.checkInId}</dd>
+                <dd>{currentCheckIn.checkInId}</dd>
+              </div>
+              <div>
+                <dt>Ticket ID</dt>
+                <dd>{currentCheckIn.ticketId}</dd>
+              </div>
+              <div>
+                <dt>Event ID</dt>
+                <dd>{currentCheckIn.eventId}</dd>
+              </div>
+              <div>
+                <dt>Attendee ID</dt>
+                <dd>{currentCheckIn.attendeeId}</dd>
               </div>
               <div>
                 <dt>Time</dt>
-                <dd>{formatDateTime(created.checkInTime)}</dd>
+                <dd>{formatDateTime(currentCheckIn.checkInTime)}</dd>
               </div>
             </dl>
           ) : (
-            <p className="empty-state">No check-in created yet.</p>
+            <p className="empty-state">Create or look up a check-in to display it here.</p>
           )}
         </article>
 
         <article className="card result-card">
-          <h2>Ticket lookup</h2>
-          {lookedUp ? (
-            <dl className="record-list">
+          <h2>Attendance</h2>
+          {attendance !== null ? (
+            <div className="metrics metrics--single">
               <div>
-                <dt>Status</dt>
-                <dd>
-                  <span className={`tone tone--${statusTone(lookedUp.checkInStatus)}`}>{lookedUp.checkInStatus}</span>
-                </dd>
+                <span>Current count</span>
+                <strong>{attendance}</strong>
               </div>
-              <div>
-                <dt>Check-in ID</dt>
-                <dd>{lookedUp.checkInId}</dd>
-              </div>
-              <div>
-                <dt>Time</dt>
-                <dd>{formatDateTime(lookedUp.checkInTime)}</dd>
-              </div>
-            </dl>
+            </div>
           ) : (
-            <p className="empty-state">No ticket lookup result yet.</p>
+            <p className="empty-state">Click “Get attendance” to load the current attendee count.</p>
           )}
         </article>
 

@@ -83,6 +83,13 @@ public class CheckIn {
         this.checkInStatus = CheckInStatus.REVERSED;
     }
 
+    public void revalidate(UUID eventId, UUID attendeeId, OffsetDateTime checkInTime) {
+        this.eventId = eventId;
+        this.attendeeId = attendeeId;
+        this.checkInTime = checkInTime;
+        this.checkInStatus = CheckInStatus.VALID;
+    }
+
     public static CheckIn valid(UUID ticketId, UUID eventId, UUID attendeeId, OffsetDateTime checkInTime) {
         return new CheckIn(UUID.randomUUID(), ticketId, eventId, attendeeId, checkInTime, CheckInStatus.VALID);
     }
