@@ -3,6 +3,7 @@ package ee.ut.eventticketing.checkin.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -52,7 +53,7 @@ class CheckInControllerTest {
             return new CheckIn(checkInId, checkIn.getTicketId(), checkIn.getEventId(), checkIn.getAttendeeId(), OffsetDateTime.parse("2026-05-04T10:15:30Z"), CheckInStatus.VALID);
         });
 
-        mockMvc.perform(post("/api/check-ins")
+        mockMvc.perform(post("/checkins")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -77,7 +78,7 @@ class CheckInControllerTest {
         when(checkInRepository.findByTicketId(ticketId)).thenReturn(Optional.of(
                 new CheckIn(UUID.fromString("88888888-8888-8888-8888-888888888888"), ticketId, eventId, attendeeId, OffsetDateTime.parse("2026-05-04T10:15:30Z"), CheckInStatus.VALID)));
 
-        mockMvc.perform(post("/api/check-ins")
+        mockMvc.perform(post("/checkins")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -91,20 +92,34 @@ class CheckInControllerTest {
     }
 
     @Test
-    void getSummary_returnsTotals() throws Exception {
+        void getAttendance_returnsCount() throws Exception {
         UUID eventId = UUID.fromString("99999999-9999-9999-9999-999999999999");
 
-        when(checkInRepository.countByEventIdAndCheckInStatus(eventId, CheckInStatus.VALID)).thenReturn(3L);
         when(checkInRepository.findByEventIdOrderByCheckInTimeDesc(eventId)).thenReturn(java.util.List.of(
                 new CheckIn(UUID.randomUUID(), UUID.randomUUID(), eventId, UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), OffsetDateTime.parse("2026-05-04T10:15:30Z"), CheckInStatus.VALID),
                 new CheckIn(UUID.randomUUID(), UUID.randomUUID(), eventId, UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), OffsetDateTime.parse("2026-05-04T10:16:30Z"), CheckInStatus.VALID),
                 new CheckIn(UUID.randomUUID(), UUID.randomUUID(), eventId, UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), OffsetDateTime.parse("2026-05-04T10:17:30Z"), CheckInStatus.VALID)
         ));
 
-        mockMvc.perform(get("/api/check-ins/events/{eventId}/summary", eventId))
+      mockMvc.perform(get("/events/{eventId}/attendance", eventId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.eventId").value(eventId.toString()))
-                .andExpect(jsonPath("$.totalCheckIns").value(3))
-                .andExpect(jsonPath("$.uniqueAttendees").value(2));
+        .andExpect(jsonPath("$").value(2));
+        }
+
+        @Test
+        void reverseCheckIn_marksCheckInAsReversed() throws Exception {
+      UUID checkInId = UUID.fromString("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+      UUID ticketId = UUID.fromString("11111111-1111-1111-1111-111111111111");
+      UUID eventId = UUID.fromString("22222222-2222-2222-2222-222222222222");
+      UUID attendeeId = UUID.fromString("33333333-3333-3333-3333-333333333333");
+
+      when(checkInRepository.findByCheckInId(checkInId)).thenReturn(Optional.of(
+        new CheckIn(checkInId, ticketId, eventId, attendeeId, OffsetDateTime.parse("2026-05-04T10:15:30Z"), CheckInStatus.VALID)));
+      when(checkInRepository.save(any(CheckIn.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+      mockMvc.perform(patch("/checkins/{checkInId}/reverse", checkInId))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.checkInId").value(checkInId.toString()))
+        .andExpect(jsonPath("$.checkInStatus").value("REVERSED"));
     }
 }

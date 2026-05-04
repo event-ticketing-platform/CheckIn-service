@@ -31,12 +31,14 @@ Client -> Controller -> Service -> Repository -> Database
 
 Implemented endpoints:
 
-- `POST /api/check-ins`
-- `GET /api/check-ins/{checkInId}`
-- `GET /api/check-ins/tickets/{ticketId}`
-- `GET /api/check-ins/events/{eventId}`
-- `GET /api/check-ins/attendees/{attendeeId}`
-- `GET /api/check-ins/events/{eventId}/summary`
+- `POST /checkins`
+- `GET /checkins/{checkInId}`
+- `GET /checkins/tickets/{ticketId}`
+- `GET /events/{eventId}/checkins`
+- `GET /events/{eventId}/attendance`
+- `PATCH /checkins/{checkInId}/reverse`
+
+Legacy aliases are still available under `/api/check-ins` for backward compatibility.
 
 ### C. OpenAPI / Swagger
 

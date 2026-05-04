@@ -6,7 +6,7 @@ info:
 servers:
   - url: http://localhost:8085
 paths:
-  /api/check-ins:
+  /checkins:
     post:
       summary: Create a check-in
       description: Validates a ticket and stores a new check-in record.
@@ -35,7 +35,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /api/check-ins/{checkInId}:
+  /checkins/{checkInId}:
     get:
       summary: Get a check-in by id
       parameters:
@@ -58,7 +58,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /api/check-ins/tickets/{ticketId}:
+    patch:
+      summary: Reverse a check-in
+      description: Marks a check-in as reversed when it was entered incorrectly.
+      parameters:
+        - name: checkInId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Check-in reversed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckInResponse'
+        '404':
+          description: Check-in not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /checkins/tickets/{ticketId}:
     get:
       summary: Get a check-in by ticket id
       parameters:
@@ -81,7 +104,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /api/check-ins/events/{eventId}:
+  /events/{eventId}/checkins:
     get:
       summary: List check-ins by event
       parameters:
@@ -100,7 +123,25 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/CheckInResponse'
-  /api/check-ins/attendees/{attendeeId}:
+  /events/{eventId}/attendance:
+    get:
+      summary: Get current event attendance
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Current attendee count for the event
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int64
+  /checkins/attendees/{attendeeId}:
     get:
       summary: List check-ins by attendee
       parameters:
@@ -119,7 +160,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/CheckInResponse'
-  /api/check-ins/events/{eventId}/summary:
+  /checkins/events/{eventId}/summary:
     get:
       summary: Get event check-in summary
       parameters:
@@ -174,7 +215,7 @@ components:
           format: date-time
         checkInStatus:
           type: string
-          enum: [VALID, DUPLICATE, REJECTED]
+          enum: [VALID, DUPLICATE, REJECTED, REVERSED]
     CheckInSummaryResponse:
       type: object
       properties:

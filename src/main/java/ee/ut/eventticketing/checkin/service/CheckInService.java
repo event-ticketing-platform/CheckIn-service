@@ -72,6 +72,23 @@ public class CheckInService {
     }
 
     @Transactional(readOnly = true)
+    public long getAttendance(UUID eventId) {
+        long attendeeCount = checkInRepository.findByEventIdOrderByCheckInTimeDesc(eventId).stream()
+                .filter(checkIn -> checkIn.getCheckInStatus() == CheckInStatus.VALID)
+                .map(CheckIn::getAttendeeId)
+                .distinct()
+                .count();
+        return attendeeCount;
+    }
+
+    public CheckInResponse reverseCheckIn(UUID checkInId) {
+        CheckIn checkIn = checkInRepository.findByCheckInId(checkInId)
+                .orElseThrow(() -> new CheckInNotFoundException(checkInId));
+        checkIn.reverse();
+        return CheckInMapper.toResponse(checkInRepository.save(checkIn));
+    }
+
+    @Transactional(readOnly = true)
     public CheckInSummaryResponse getSummary(UUID eventId) {
         long totalCheckIns = checkInRepository.countByEventIdAndCheckInStatus(eventId, CheckInStatus.VALID);
         long uniqueAttendees = checkInRepository.findByEventIdOrderByCheckInTimeDesc(eventId).stream()

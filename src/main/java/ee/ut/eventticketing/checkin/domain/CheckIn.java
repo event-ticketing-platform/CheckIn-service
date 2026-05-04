@@ -2,6 +2,7 @@ package ee.ut.eventticketing.checkin.domain;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -76,6 +77,10 @@ public class CheckIn {
 
     public CheckInStatus getCheckInStatus() {
         return checkInStatus;
+    }
+
+    public void reverse() {
+        this.checkInStatus = CheckInStatus.REVERSED;
     }
 
     public static CheckIn valid(UUID ticketId, UUID eventId, UUID attendeeId, OffsetDateTime checkInTime) {
