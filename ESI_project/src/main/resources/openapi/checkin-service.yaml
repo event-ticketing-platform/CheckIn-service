@@ -1,0 +1,201 @@
+openapi: 3.0.3
+info:
+  title: Attendee Check-in Service API
+  version: 1.0.0
+  description: API specification for the Attendee Check-in Service.
+servers:
+  - url: http://localhost:8085
+paths:
+  /api/check-ins:
+    post:
+      summary: Create a check-in
+      description: Validates a ticket and stores a new check-in record.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCheckInRequest'
+      responses:
+        '201':
+          description: Check-in created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckInResponse'
+        '409':
+          description: Duplicate check-in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Ticket validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/check-ins/{checkInId}:
+    get:
+      summary: Get a check-in by id
+      parameters:
+        - name: checkInId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Check-in found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckInResponse'
+        '404':
+          description: Check-in not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/check-ins/tickets/{ticketId}:
+    get:
+      summary: Get a check-in by ticket id
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Check-in found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckInResponse'
+        '404':
+          description: Check-in not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/check-ins/events/{eventId}:
+    get:
+      summary: List check-ins by event
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of check-ins for the event
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CheckInResponse'
+  /api/check-ins/attendees/{attendeeId}:
+    get:
+      summary: List check-ins by attendee
+      parameters:
+        - name: attendeeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of check-ins for the attendee
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CheckInResponse'
+  /api/check-ins/events/{eventId}/summary:
+    get:
+      summary: Get event check-in summary
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Summary of valid check-ins for the event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckInSummaryResponse'
+components:
+  schemas:
+    CreateCheckInRequest:
+      type: object
+      required:
+        - ticketId
+        - eventId
+        - attendeeId
+      properties:
+        ticketId:
+          type: string
+          format: uuid
+        eventId:
+          type: string
+          format: uuid
+        attendeeId:
+          type: string
+          format: uuid
+    CheckInResponse:
+      type: object
+      properties:
+        checkInId:
+          type: string
+          format: uuid
+        ticketId:
+          type: string
+          format: uuid
+        eventId:
+          type: string
+          format: uuid
+        attendeeId:
+          type: string
+          format: uuid
+        checkInTime:
+          type: string
+          format: date-time
+        checkInStatus:
+          type: string
+          enum: [VALID, DUPLICATE, REJECTED]
+    CheckInSummaryResponse:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        totalCheckIns:
+          type: integer
+          format: int64
+        uniqueAttendees:
+          type: integer
+          format: int64
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string

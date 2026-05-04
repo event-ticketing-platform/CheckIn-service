@@ -1,0 +1,33 @@
+services:
+  checkin-db:
+    image: postgres:16-alpine
+    container_name: checkin-db
+    environment:
+      POSTGRES_DB: checkin_db
+      POSTGRES_USER: checkin
+      POSTGRES_PASSWORD: checkin
+    ports:
+      - "5433:5432"
+    volumes:
+      - checkin-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U checkin -d checkin_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  attendee-checkin-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: attendee-checkin-service
+    depends_on:
+      checkin-db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8086:8085"
+
+volumes:
+  checkin-db-data:
