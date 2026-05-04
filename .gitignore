@@ -1,3 +1,5 @@
+ESI_project/
+ESI-W8.2/
 node_modules/
 **/node_modules/
 dist/
@@ -7,7 +9,7 @@ target/
 data/
 **/data/
 *.tsbuildinfo
-ESI_project/frontend/vite.config.js
-ESI_project/frontend/vite.config.d.ts
+frontend/vite.config.js
+frontend/vite.config.d.ts
 *.log
 .DS_Store
