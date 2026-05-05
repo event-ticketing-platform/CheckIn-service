@@ -1,7 +1,6 @@
 package ee.ut.eventticketing.checkin.domain;
 
 import java.time.OffsetDateTime;
-import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -21,16 +20,16 @@ public class CheckIn {
     private Long id;
 
     @Column(name = "check_in_id", nullable = false, unique = true, updatable = false)
-    private UUID checkInId;
+    private String checkInId;
 
     @Column(name = "ticket_id", nullable = false, unique = true)
-    private UUID ticketId;
+    private String ticketId;
 
     @Column(name = "event_id", nullable = false)
-    private UUID eventId;
+    private String eventId;
 
     @Column(name = "attendee_id", nullable = false)
-    private UUID attendeeId;
+    private String attendeeId;
 
     @Column(name = "check_in_time", nullable = false)
     private OffsetDateTime checkInTime;
@@ -42,7 +41,7 @@ public class CheckIn {
     protected CheckIn() {
     }
 
-    public CheckIn(UUID checkInId, UUID ticketId, UUID eventId, UUID attendeeId, OffsetDateTime checkInTime, CheckInStatus checkInStatus) {
+    public CheckIn(String checkInId, String ticketId, String eventId, String attendeeId, OffsetDateTime checkInTime, CheckInStatus checkInStatus) {
         this.checkInId = checkInId;
         this.ticketId = ticketId;
         this.eventId = eventId;
@@ -55,19 +54,19 @@ public class CheckIn {
         return id;
     }
 
-    public UUID getCheckInId() {
+    public String getCheckInId() {
         return checkInId;
     }
 
-    public UUID getTicketId() {
+    public String getTicketId() {
         return ticketId;
     }
 
-    public UUID getEventId() {
+    public String getEventId() {
         return eventId;
     }
 
-    public UUID getAttendeeId() {
+    public String getAttendeeId() {
         return attendeeId;
     }
 
@@ -83,14 +82,14 @@ public class CheckIn {
         this.checkInStatus = CheckInStatus.REVERSED;
     }
 
-    public void revalidate(UUID eventId, UUID attendeeId, OffsetDateTime checkInTime) {
+    public void revalidate(String eventId, String attendeeId, OffsetDateTime checkInTime) {
         this.eventId = eventId;
         this.attendeeId = attendeeId;
         this.checkInTime = checkInTime;
         this.checkInStatus = CheckInStatus.VALID;
     }
 
-    public static CheckIn valid(UUID ticketId, UUID eventId, UUID attendeeId, OffsetDateTime checkInTime) {
-        return new CheckIn(UUID.randomUUID(), ticketId, eventId, attendeeId, checkInTime, CheckInStatus.VALID);
+    public static CheckIn valid(String ticketId, String eventId, String attendeeId, OffsetDateTime checkInTime) {
+        return new CheckIn("C-" + System.currentTimeMillis() + "-" + (int)(Math.random() * 1000), ticketId, eventId, attendeeId, checkInTime, CheckInStatus.VALID);
     }
 }

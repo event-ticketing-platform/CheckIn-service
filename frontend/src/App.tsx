@@ -33,17 +33,10 @@ type RequestForm = {
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
 
 const defaultForm: RequestForm = {
-  ticketId: '11111111-1111-1111-1111-111111111111',
-  eventId: '22222222-2222-2222-2222-222222222222',
-  attendeeId: '33333333-3333-3333-3333-333333333333',
+  ticketId: 'T1',
+  eventId: 'E1',
+  attendeeId: 'A1',
 };
-
-const uuidPattern =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-function isUuid(value: string) {
-  return uuidPattern.test(value.trim());
-}
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
@@ -99,11 +92,11 @@ export default function App() {
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!isUuid(form.ticketId) || !isUuid(form.eventId) || !isUuid(form.attendeeId)) {
+    if (!form.ticketId || !form.eventId || !form.attendeeId) {
       setError({
         status: 400,
         error: 'Invalid input',
-        message: 'Ticket ID, Event ID, and Attendee ID must be valid UUID values.',
+        message: 'Ticket ID, Event ID, and Attendee ID must be provided.',
       });
       return;
     }
@@ -126,11 +119,11 @@ export default function App() {
   }
 
   async function handleLookupByTicket() {
-    if (!isUuid(form.ticketId)) {
+    if (!form.ticketId) {
       setError({
         status: 400,
         error: 'Invalid input',
-        message: 'Ticket ID must be a valid UUID value.',
+        message: 'Ticket ID must be provided.',
       });
       return;
     }
@@ -172,11 +165,11 @@ export default function App() {
   }
 
   async function handleSummary() {
-    if (!isUuid(form.eventId)) {
+    if (!form.eventId) {
       setError({
         status: 400,
         error: 'Invalid input',
-        message: 'Event ID must be a valid UUID value.',
+        message: 'Event ID must be provided.',
       });
       return;
     }
@@ -195,11 +188,11 @@ export default function App() {
   }
 
   async function handleAttendance() {
-    if (!isUuid(form.eventId)) {
+    if (!form.eventId) {
       setError({
         status: 400,
         error: 'Invalid input',
-        message: 'Event ID must be a valid UUID value.',
+        message: 'Event ID must be provided.',
       });
       return;
     }
@@ -255,7 +248,7 @@ export default function App() {
             <input
               value={form.ticketId}
               onChange={(event) => setForm({ ...form, ticketId: event.target.value.trim() })}
-              placeholder="11111111-1111-1111-1111-111111111111"
+              placeholder="T1"
             />
           </label>
           <label>
@@ -263,7 +256,7 @@ export default function App() {
             <input
               value={form.eventId}
               onChange={(event) => setForm({ ...form, eventId: event.target.value.trim() })}
-              placeholder="22222222-2222-2222-2222-222222222222"
+              placeholder="E1"
             />
           </label>
           <label>
@@ -271,7 +264,7 @@ export default function App() {
             <input
               value={form.attendeeId}
               onChange={(event) => setForm({ ...form, attendeeId: event.target.value.trim() })}
-              placeholder="33333333-3333-3333-3333-333333333333"
+              placeholder="A1"
             />
           </label>
 

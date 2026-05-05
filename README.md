@@ -25,7 +25,7 @@ Client -> Controller -> Service -> Repository -> Database
 
 ### A. Running Service
 
-- Starts with Maven and exposes endpoints on port `8085`
+- Starts with Maven and exposes endpoints on port `8086`
 
 ### B. API Implementation
 
@@ -123,3 +123,8 @@ docker compose up --build
 - Port constraints respected: service uses `8085`.
 - In Docker, the backend is exposed on `8086` and the frontend dev server runs on `5173`.
 - `@MockBean` deprecation warnings are present with current Spring Boot test API but do not affect build/test success.
+
+Event ID: 11111111-1111-4111-8111-111111111111
+Ticket ID: d1111111-1111-4111-8111-111111111111
+Attendee ID: a1111111-1111-4111-8111-111111111111
+Check-in ID: c1111111-1111-4111-8111-111111111111

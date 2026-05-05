@@ -16,7 +16,6 @@ import ee.ut.eventticketing.checkin.service.TicketValidationClient;
 import ee.ut.eventticketing.checkin.service.TicketValidationResult;
 import java.time.OffsetDateTime;
 import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -41,10 +40,10 @@ class CheckInControllerTest {
     // Happy path test case: valid ticket check-in should be created successfully.
     @Test
     void createCheckIn_returnsCreatedCheckIn() throws Exception {
-        UUID ticketId = UUID.fromString("11111111-1111-1111-1111-111111111111");
-        UUID eventId = UUID.fromString("22222222-2222-2222-2222-222222222222");
-        UUID attendeeId = UUID.fromString("33333333-3333-3333-3333-333333333333");
-        UUID checkInId = UUID.fromString("44444444-4444-4444-4444-444444444444");
+        String ticketId = "T1";
+        String eventId = "E1";
+        String attendeeId = "A1";
+        String checkInId = "C1";
 
         when(checkInRepository.findByTicketId(ticketId)).thenReturn(Optional.empty());
         when(ticketValidationClient.validate(ticketId, eventId, attendeeId)).thenReturn(TicketValidationResult.approved());
@@ -57,48 +56,48 @@ class CheckInControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "ticketId": "11111111-1111-1111-1111-111111111111",
-                                  "eventId": "22222222-2222-2222-2222-222222222222",
-                                  "attendeeId": "33333333-3333-3333-3333-333333333333"
+                                  "ticketId": "T1",
+                                  "eventId": "E1",
+                                  "attendeeId": "A1"
                                 }
                                 """))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.checkInId").value(checkInId.toString()))
-                .andExpect(jsonPath("$.ticketId").value(ticketId.toString()))
+                .andExpect(jsonPath("$.checkInId").value(checkInId))
+                .andExpect(jsonPath("$.ticketId").value(ticketId))
                 .andExpect(jsonPath("$.checkInStatus").value("VALID"));
     }
 
           // Error case test case: duplicate ticket check-in should return conflict.
     @Test
     void createCheckIn_returnsConflictWhenTicketAlreadyCheckedIn() throws Exception {
-        UUID ticketId = UUID.fromString("55555555-5555-5555-5555-555555555555");
-        UUID eventId = UUID.fromString("66666666-6666-6666-6666-666666666666");
-        UUID attendeeId = UUID.fromString("77777777-7777-7777-7777-777777777777");
+        String ticketId = "T2";
+        String eventId = "E2";
+        String attendeeId = "A2";
 
         when(checkInRepository.findByTicketId(ticketId)).thenReturn(Optional.of(
-                new CheckIn(UUID.fromString("88888888-8888-8888-8888-888888888888"), ticketId, eventId, attendeeId, OffsetDateTime.parse("2026-05-04T10:15:30Z"), CheckInStatus.VALID)));
+                new CheckIn("C2", ticketId, eventId, attendeeId, OffsetDateTime.parse("2026-05-04T10:15:30Z"), CheckInStatus.VALID)));
 
         mockMvc.perform(post("/checkins")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "ticketId": "55555555-5555-5555-5555-555555555555",
-                                  "eventId": "66666666-6666-6666-6666-666666666666",
-                                  "attendeeId": "77777777-7777-7777-7777-777777777777"
+                                  "ticketId": "T2",
+                                  "eventId": "E2",
+                                  "attendeeId": "A2"
                                 }
                                 """))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value("Ticket already checked in: 55555555-5555-5555-5555-555555555555"));
+                .andExpect(jsonPath("$.message").value("Ticket already checked in: T2"));
     }
 
     @Test
         void getAttendance_returnsCount() throws Exception {
-        UUID eventId = UUID.fromString("99999999-9999-9999-9999-999999999999");
+        String eventId = "E99";
 
         when(checkInRepository.findByEventIdOrderByCheckInTimeDesc(eventId)).thenReturn(java.util.List.of(
-                new CheckIn(UUID.randomUUID(), UUID.randomUUID(), eventId, UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), OffsetDateTime.parse("2026-05-04T10:15:30Z"), CheckInStatus.VALID),
-                new CheckIn(UUID.randomUUID(), UUID.randomUUID(), eventId, UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), OffsetDateTime.parse("2026-05-04T10:16:30Z"), CheckInStatus.VALID),
-                new CheckIn(UUID.randomUUID(), UUID.randomUUID(), eventId, UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), OffsetDateTime.parse("2026-05-04T10:17:30Z"), CheckInStatus.VALID)
+                new CheckIn("C91", "T91", eventId, "A91", OffsetDateTime.parse("2026-05-04T10:15:30Z"), CheckInStatus.VALID),
+                new CheckIn("C92", "T92", eventId, "A92", OffsetDateTime.parse("2026-05-04T10:16:30Z"), CheckInStatus.VALID),
+                new CheckIn("C93", "T93", eventId, "A91", OffsetDateTime.parse("2026-05-04T10:17:30Z"), CheckInStatus.VALID)
         ));
 
       mockMvc.perform(get("/events/{eventId}/attendance", eventId))
@@ -108,10 +107,10 @@ class CheckInControllerTest {
 
         @Test
         void reverseCheckIn_marksCheckInAsReversed() throws Exception {
-      UUID checkInId = UUID.fromString("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
-      UUID ticketId = UUID.fromString("11111111-1111-1111-1111-111111111111");
-      UUID eventId = UUID.fromString("22222222-2222-2222-2222-222222222222");
-      UUID attendeeId = UUID.fromString("33333333-3333-3333-3333-333333333333");
+      String checkInId = "C100";
+      String ticketId = "T100";
+      String eventId = "E100";
+      String attendeeId = "A100";
 
       when(checkInRepository.findByCheckInId(checkInId)).thenReturn(Optional.of(
         new CheckIn(checkInId, ticketId, eventId, attendeeId, OffsetDateTime.parse("2026-05-04T10:15:30Z"), CheckInStatus.VALID)));
@@ -119,7 +118,7 @@ class CheckInControllerTest {
 
       mockMvc.perform(patch("/checkins/{checkInId}/reverse", checkInId))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.checkInId").value(checkInId.toString()))
+        .andExpect(jsonPath("$.checkInId").value(checkInId))
         .andExpect(jsonPath("$.checkInStatus").value("REVERSED"));
     }
 }
