@@ -2,6 +2,7 @@ package ee.ut.eventticketing.checkin.service;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,41 +50,41 @@ public class CheckInService {
             throw new InvalidTicketException(request.ticketId());
         }
 
-        CheckIn saved = checkInRepository.save(CheckIn.valid(request.ticketId(), request.eventId(), request.attendeeId(), OffsetDateTime.now()));
+        CheckIn saved = checkInRepository.save(new CheckIn(java.util.UUID.randomUUID(), request.ticketId(), request.attendeeId(), request.eventId(), OffsetDateTime.now(), CheckInStatus.VALID));
         return CheckInMapper.toResponse(saved);
     }
 
     @Transactional(readOnly = true)
-    public CheckInResponse getCheckIn(String checkInId) {
-        return checkInRepository.findByCheckInId(checkInId)
+    public CheckInResponse getCheckIn(UUID checkInId) {
+        return checkInRepository.findById(checkInId)
                 .map(CheckInMapper::toResponse)
-                .orElseThrow(() -> new CheckInNotFoundException(checkInId));
+                .orElseThrow(() -> new CheckInNotFoundException(checkInId.toString()));
     }
 
     @Transactional(readOnly = true)
-    public CheckInResponse getByTicketId(String ticketId) {
+    public CheckInResponse getByTicketId(UUID ticketId) {
         return checkInRepository.findByTicketId(ticketId)
                 .map(CheckInMapper::toResponse)
                 .orElseThrow(() -> new CheckInNotFoundException("Check-in not found for ticket: " + ticketId));
     }
 
     @Transactional(readOnly = true)
-    public List<CheckInResponse> getByEventId(String eventId) {
-        return checkInRepository.findByEventIdOrderByCheckInTimeDesc(eventId).stream()
+    public List<CheckInResponse> getByEventId(UUID eventId) {
+        return checkInRepository.findByEventId(eventId).stream()
                 .map(CheckInMapper::toResponse)
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<CheckInResponse> getByAttendeeId(String attendeeId) {
-        return checkInRepository.findByAttendeeIdOrderByCheckInTimeDesc(attendeeId).stream()
+    public List<CheckInResponse> getByAttendeeId(UUID attendeeId) {
+        return checkInRepository.findByAttendeeId(attendeeId).stream()
                 .map(CheckInMapper::toResponse)
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public long getAttendance(String eventId) {
-        long attendeeCount = checkInRepository.findByEventIdOrderByCheckInTimeDesc(eventId).stream()
+    public long getAttendance(UUID eventId) {
+        long attendeeCount = checkInRepository.findByEventId(eventId).stream()
                 .filter(checkIn -> checkIn.getCheckInStatus() == CheckInStatus.VALID)
                 .map(CheckIn::getAttendeeId)
                 .distinct()
@@ -91,17 +92,17 @@ public class CheckInService {
         return attendeeCount;
     }
 
-    public CheckInResponse reverseCheckIn(String checkInId) {
-        CheckIn checkIn = checkInRepository.findByCheckInId(checkInId)
-                .orElseThrow(() -> new CheckInNotFoundException(checkInId));
+    public CheckInResponse reverseCheckIn(UUID checkInId) {
+        CheckIn checkIn = checkInRepository.findById(checkInId)
+                .orElseThrow(() -> new CheckInNotFoundException(checkInId.toString()));
         checkIn.reverse();
         return CheckInMapper.toResponse(checkInRepository.save(checkIn));
     }
 
     @Transactional(readOnly = true)
-    public CheckInSummaryResponse getSummary(String eventId) {
+    public CheckInSummaryResponse getSummary(UUID eventId) {
         long totalCheckIns = checkInRepository.countByEventIdAndCheckInStatus(eventId, CheckInStatus.VALID);
-        long uniqueAttendees = checkInRepository.findByEventIdOrderByCheckInTimeDesc(eventId).stream()
+        long uniqueAttendees = checkInRepository.findByEventId(eventId).stream()
                 .filter(checkIn -> checkIn.getCheckInStatus() == CheckInStatus.VALID)
                 .map(CheckIn::getAttendeeId)
                 .distinct()

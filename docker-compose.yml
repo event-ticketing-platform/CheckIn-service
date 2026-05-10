@@ -27,7 +27,38 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
     ports:
-      - "8086:8085"
+      - "8086:8086"
+
+  analytics-db:
+    image: postgres:16-alpine
+    container_name: analytics-db
+    environment:
+      POSTGRES_DB: analytics_db
+      POSTGRES_USER: analytics
+      POSTGRES_PASSWORD: analytics
+    ports:
+      - "5434:5432"
+    volumes:
+      - analytics-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U analytics -d analytics_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  reporting-and-analytics-service:
+    build:
+      context: ../ESI_Analytics_Service
+      dockerfile: Dockerfile
+    container_name: reporting-and-analytics-service
+    depends_on:
+      analytics-db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8087:8087"
 
 volumes:
   checkin-db-data:
+  analytics-db-data:

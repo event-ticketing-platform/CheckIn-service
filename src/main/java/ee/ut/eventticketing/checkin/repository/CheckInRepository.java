@@ -4,17 +4,18 @@ import ee.ut.eventticketing.checkin.domain.CheckIn;
 import ee.ut.eventticketing.checkin.domain.CheckInStatus;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-public interface CheckInRepository extends JpaRepository<CheckIn, Long> {
+@Repository
+public interface CheckInRepository extends JpaRepository<CheckIn, UUID> {
 
-    Optional<CheckIn> findByCheckInId(String checkInId);
+    Optional<CheckIn> findByTicketId(UUID ticketId);
 
-    Optional<CheckIn> findByTicketId(String ticketId);
+    List<CheckIn> findByEventId(UUID eventId);
 
-    List<CheckIn> findByEventIdOrderByCheckInTimeDesc(String eventId);
+    List<CheckIn> findByAttendeeId(UUID attendeeId);
 
-    List<CheckIn> findByAttendeeIdOrderByCheckInTimeDesc(String attendeeId);
-
-    long countByEventIdAndCheckInStatus(String eventId, CheckInStatus checkInStatus);
+    int countByEventIdAndCheckInStatus(UUID eventId, CheckInStatus status);
 }

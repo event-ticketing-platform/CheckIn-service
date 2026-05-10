@@ -1,130 +1,17 @@
-# Attendee Check-in Service
+# Attendee Check-In Service
 
-This repository contains the **Attendee Check-in Service**
+## Overview
+This service handles the validation of attendee tickets and records check-in events. It ensures that tickets are not used more than once and provides live attendance counts.
 
-## Scope and Responsibility
+## Key Endpoints
+- `POST /checkins`: Validate a ticket and check in an attendee.
+- `GET /checkins/{id}`: Retrieve a specific check-in record.
+- `GET /events/{eventId}/attendance`: Get the current live attendance count for an event.
+- `GET /checkins/events/{eventId}/summary`: Get a summary of check-ins (total vs unique).
+- `PATCH /checkins/{id}/reverse`: Reverse an accidental check-in.
 
-- Student responsibility (from Assignment 3): **Attendee Check-in Service** and **Reporting & Analytics Service**
-- This checkpoint implementation includes **Service 1 complete**: Attendee Check-in Service
+## Database
+Uses PostgreSQL in Docker (via `checkin-db`) and H2 for local development.
 
-## Architecture (Spring Boot Layering)
-
-The service follows the required layered architecture:
-
-- Controller layer: `src/main/java/ee/ut/eventticketing/checkin/controller`
-- DTO layer: `src/main/java/ee/ut/eventticketing/checkin/dto`
-- Service layer: `src/main/java/ee/ut/eventticketing/checkin/service`
-- Repository layer: `src/main/java/ee/ut/eventticketing/checkin/repository`
-- Domain model: `src/main/java/ee/ut/eventticketing/checkin/domain`
-
-Flow:
-
-Client -> Controller -> Service -> Repository -> Database
-
-## Checkpoint 1 Deliverables Mapping
-
-### A. Running Service
-
-- Starts with Maven and exposes endpoints on port `8086`
-
-### B. API Implementation
-
-Implemented endpoints:
-
-- `POST /checkins`
-- `GET /checkins/{checkInId}`
-- `GET /checkins/tickets/{ticketId}`
-- `GET /events/{eventId}/checkins`
-- `GET /events/{eventId}/attendance`
-- `PATCH /checkins/{checkInId}/reverse`
-
-Legacy aliases are still available under `/api/check-ins` for backward compatibility.
-
-### C. OpenAPI / Swagger
-
-- Swagger UI available at `http://localhost:8086/swagger-ui/index.html` when running via Docker
-- Local Maven run: `http://localhost:8085/swagger-ui.html`
-- Explicit OpenAPI specification file:
-  - `src/main/resources/openapi/checkin-service.yaml`
-
-### D. Persistence
-
-- Repository + entity persistence via Spring Data JPA
-- Local profile: H2 (`application.yml`)
-- Docker profile: PostgreSQL (`application-docker.yml`)
-
-### E. Testing
-
-- `@WebMvcTest` class:
-  - `src/test/java/ee/ut/eventticketing/checkin/controller/CheckInControllerTest.java`
-- Includes:
-  - happy-path test (`201 Created`)
-  - error-path test (`409 Conflict` for duplicate check-in)
-- Endpoint under test depends on another component (`TicketValidationClient`), mocked in test
-
-### F. API Demonstration
-
-- Demonstrable using Swagger UI or Postman
-
-## Run Instructions
-
-### Backend (local)
-
-From project root:
-
-```powershell
-& "$env:TEMP\apache-maven-3.9.9\bin\mvn.cmd" spring-boot:run
-```
-
-### Run tests
-
-```powershell
-& "$env:TEMP\apache-maven-3.9.9\bin\mvn.cmd" test
-```
-
-### Frontend
-
-From `frontend` folder:
-
-```powershell
-npm install
-npm run dev
-```
-
-Open `http://localhost:5173`.
-
-The frontend calls the clean assignment routes through Vite proxying:
-
-- `POST /checkins`
-- `GET /checkins/{checkInId}`
-- `GET /checkins/tickets/{ticketId}`
-- `GET /events/{eventId}/checkins`
-- `GET /events/{eventId}/attendance`
-- `PATCH /checkins/{checkInId}/reverse`
-- `GET /checkins/events/{eventId}/summary`
-
-## Docker
-
-The service is containerized with:
-
-- `Dockerfile` for attendee-checkin-service
-- `docker-compose.yml` including:
-  - `attendee-checkin-service`
-  - `checkin-db` (PostgreSQL)
-
-Run:
-
-```powershell
-docker compose up --build
-```
-
-## Notes
-
-- Port constraints respected: service uses `8085`.
-- In Docker, the backend is exposed on `8086` and the frontend dev server runs on `5173`.
-- `@MockBean` deprecation warnings are present with current Spring Boot test API but do not affect build/test success.
-
-Event ID: 11111111-1111-4111-8111-111111111111
-Ticket ID: d1111111-1111-4111-8111-111111111111
-Attendee ID: a1111111-1111-4111-8111-111111111111
-Check-in ID: c1111111-1111-4111-8111-111111111111
+## Integration
+Exposed via API Gateway at `/api/checkin/**`.

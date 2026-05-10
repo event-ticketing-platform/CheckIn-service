@@ -18,7 +18,7 @@ spring:
         format_sql: true
 
 server:
-  port: 8085
+  port: 8086
 
 springdoc:
   swagger-ui:

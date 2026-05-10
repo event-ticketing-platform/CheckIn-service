@@ -6,19 +6,7 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/checkins': {
-        target: 'http://localhost:8086',
-        changeOrigin: true,
-      },
-      '/events': {
-        target: 'http://localhost:8086',
-        changeOrigin: true,
-      },
-      '/v3': {
-        target: 'http://localhost:8086',
-        changeOrigin: true,
-      },
-      '/swagger-ui': {
+      '/api/checkin': {
         target: 'http://localhost:8086',
         changeOrigin: true,
       },

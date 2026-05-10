@@ -1,6 +1,8 @@
 package ee.ut.eventticketing.checkin.service;
 
+import java.util.UUID;
+
 public interface TicketValidationClient {
 
-    TicketValidationResult validate(String ticketId, String eventId, String attendeeId);
+    TicketValidationResult validate(UUID ticketId, UUID eventId, UUID attendeeId);
 }
