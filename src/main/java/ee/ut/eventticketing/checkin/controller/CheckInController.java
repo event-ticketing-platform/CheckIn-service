@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,6 +35,7 @@ public class CheckInController {
 
     @PostMapping("/checkins")
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('USER', 'CUSTOMER', 'ADMIN')")
     @Operation(summary = "Create a check-in", description = "Validates a ticket and records an attendee check-in.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Check-in created"),
@@ -45,6 +47,7 @@ public class CheckInController {
     }
 
     @GetMapping("/checkins/{checkInId}")
+    @PreAuthorize("hasAnyRole('USER', 'CUSTOMER', 'ADMIN')")
     @Operation(summary = "Get a check-in by id", description = "Returns a stored check-in record.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Check-in found"),
@@ -55,6 +58,7 @@ public class CheckInController {
     }
 
     @GetMapping("/checkins/tickets/{ticketId}")
+    @PreAuthorize("hasAnyRole('USER', 'CUSTOMER', 'ADMIN')")
     @Operation(summary = "Get a check-in by ticket id", description = "Looks up the check-in associated with a ticket.")
     public CheckInResponse getByTicketId(@PathVariable UUID ticketId) {
         return checkInService.getByTicketId(ticketId);
@@ -67,6 +71,7 @@ public class CheckInController {
     }
 
     @GetMapping("/checkins/attendees/{attendeeId}")
+    @PreAuthorize("hasAnyRole('USER', 'CUSTOMER', 'ADMIN')")
     @Operation(summary = "List check-ins by attendee", description = "Returns all check-ins for a given attendee.")
     public List<CheckInResponse> getByAttendeeId(@PathVariable UUID attendeeId) {
         return checkInService.getByAttendeeId(attendeeId);
@@ -85,6 +90,7 @@ public class CheckInController {
     }
 
     @PatchMapping("/checkins/{checkInId}/reverse")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Reverse a check-in", description = "Marks an incorrect check-in as reversed.")
     public CheckInResponse reverseCheckIn(@PathVariable UUID checkInId) {
         return checkInService.reverseCheckIn(checkInId);

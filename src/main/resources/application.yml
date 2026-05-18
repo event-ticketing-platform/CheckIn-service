@@ -26,3 +26,7 @@ springdoc:
 
 checkin:
   allow-duplicate-audit: false
+
+jwt:
+  issuer: ${JWT_ISSUER:event-ticketing-gateway}
+  secret: ${JWT_SECRET:event-ticketing-development-secret-32}
